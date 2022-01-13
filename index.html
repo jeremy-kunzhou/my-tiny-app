@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Tiny App</title>
+    <link rel="shortcut icon" href="/my_icon.ico" />
+    <link rel="apple-touch-icon" href="/my_icon.ico" />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+      integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"
+      integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"
+      integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
+    <script src="/script/qrcode.js"></script>
+    <style>
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 140px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 150%;
+        left: 50%;
+        margin-left: -75px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #555 transparent transparent transparent;
+      }
+
+      .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .jumbotron {
+        padding: 1rem;
+      }
+
+      #canvas {
+        height: 0px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .message-item {
+        display: flex; 
+        align-items: center; 
+        column-gap: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <button class="nav-link active" aria-current="page" id="button-link-qrcode">QR Code</butt>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="button-link-files">Files</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="button-link-messages">Messages</button>
+        </li>
+      </ul>
+      <div class="jumbotron" id="qrcode-panel">
+        <h4 class="display-9">Qr Code</h4>
+        <canvas id="canvas"></canvas>
+        <textarea id="qr-content" class="form-control" placeholder="content" ></textarea>
+        <br />
+        <button id="qr-gen-button" class="btn btn-success">Gen QR</button>
+        <button id="qr-clear-button" class="btn btn-warning">Clear</button>
+      </div>
+      <div class="jumbotron hidden" id="files-panel">
+        <h4 class="display-9">Send File</h4>
+        <form
+          ref="uploadForm"
+          id="uploadForm"
+          action="upload"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <input type="file" name="sampleFile" />
+          <input type="submit" value="Upload" />
+          <span id="status"></span>
+        </form>
+        <br />
+        <a class="btn btn-primary" href="/files" role="button" target="_blank"
+          >Show Files</a
+        >
+      </div>
+      <div class="jumbotron hidden" id="messages-panel">
+        <h4 class="display-9">Send Message</h4>
+        <input id="name" class="form-control" placeholder="Name" />
+        <br />
+        <textarea
+          id="message"
+          class="form-control"
+          placeholder="Your Message Here"
+        ></textarea>
+        <br />
+        <button id="send" class="btn btn-success">Send</button>
+        <button id="clear" class="btn btn-warning">Clear</button>
+      </div>
+      <div id="messages"></div>
+    </div>
+    <script>
+      var socket = io();
+      $(() => {
+        $("#button-link-files").click(() => {
+          clearSelection();
+          $("#files-panel").removeClass('hidden');
+          $("#button-link-files").addClass("active");
+        })
+
+        $("#button-link-qrcode").click(() => {
+          clearSelection();
+          $("#qrcode-panel").removeClass('hidden');
+          $("#button-link-qrcode").addClass("active");
+        })
+
+        $("#button-link-messages").click(() => {
+          clearSelection();
+          $("#messages-panel").removeClass('hidden');
+          $("#button-link-messages").addClass("active");
+        })
+
+        function clearSelection() {
+          $("#qrcode-panel").addClass('hidden');
+          $("#files-panel").addClass('hidden');
+          $("#messages-panel").addClass('hidden');
+          $("#button-link-qrcode").removeClass("active");
+          $("#button-link-files").removeClass("active");
+          $("#button-link-messages").removeClass("active");
+        }
+
+
+
+        // send message
+        $("#send").click(() => {
+          sendMessage({ name: $("#name").val(), message: $("#message").val() });
+        });
+
+        $("#clear").click(() => {
+          $("#message").val("");
+        });
+
+        $("#qr-gen-button").click(() => {
+          console.log($("#qr-content").val());
+          QRCode.toCanvas(
+            document.getElementById("canvas"),
+            $("#qr-content").val(),
+            function (error) {
+              if (error) console.error(error);
+              console.log("success!");
+            }
+          );
+        });
+
+        // gen qr code
+        $("#qr-clear-button").click(() => {
+          $("#qr-content").val("");
+          const canvas = document.getElementById("canvas");
+          // const ctx = canvas.getContext("2d");
+          // ctx.clearRect(0, 0, 0, 0);
+          // canvas.width = canvas.height = 0;
+          // ctx.fillRect(0, 0, 0, 0);
+          canvas.style.height = '0px';
+        });
+
+        // upload file
+        $("#uploadForm").submit(function () {
+          $("#status").empty().text("File is uploading...");
+          $(this).ajaxSubmit({
+            error: function (xhr) {
+              status("Error: " + xhr.status);
+            },
+
+            success: function (response) {
+              $("#status").empty().text(response);
+              console.log(response);
+            },
+          });
+          //Very important line, it disable the page refresh.
+          return false;
+        });
+
+        getMessages();
+      });
+
+      socket.on("message", addMessages);
+
+      function addMessages(message) {
+        $("#messages").append(
+          `<p class="message-item"> <span class="display-4">${message.name}</span> <button class="btn btn-light" onclick="myFunction('${message.message}')">Copy</button></p>  <p> ${message.message} </p> `
+        );
+      }
+
+      function getMessages() {
+        $.get("http://192.168.2.107:3000/messages", (data) => {
+          data.forEach(addMessages);
+        });
+      }
+
+      function sendMessage(message) {
+        $.post("http://192.168.2.107:3000/messages", message);
+      }
+
+      function myFunction(copyText) {
+        console.log(copyText);
+        if (typeof navigator.clipboard == "undefined") {
+          console.log("navigator.clipboard");
+          var textArea = document.createElement("textarea");
+          textArea.value = copyText;
+          textArea.style.position = "fixed"; //avoid scrolling to bottom
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          try {
+            var successful = document.execCommand("copy");
+            var msg = successful ? "successful" : "unsuccessful";
+            console.log(msg);
+          } catch (err) {
+            console.log("Was not possible to copy te text: ", err);
+          }
+
+          document.body.removeChild(textArea);
+          return;
+        }
+        navigator.clipboard.writeText(copyText).then(
+          function () {
+            console.log(`successful!`);
+          },
+          function (err) {
+            console.log("unsuccessful!", err);
+          }
+        );
+      }
+    </script>
+  </body>
+</html>

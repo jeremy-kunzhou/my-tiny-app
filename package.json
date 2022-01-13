@@ -1,0 +1,24 @@
+{
+  "name": "my-tiny-app",
+  "version": "1.0.0",
+  "description": "my tiny app",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "express-fileupload": "^1.2.1",
+    "mongoose": "^5.7.5",
+    "qrcode": "^1.5.0",
+    "serve-index": "^1.9.1",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {
+    "jasmine": "^3.1.0",
+    "request": "^2.87.0"
+  }
+}
