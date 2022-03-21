@@ -19,7 +19,7 @@ function MessageStorage () {
       const filter = allMessages.filter(element => {
         return Object.keys(conditions).map(key => {
           return element.hasOwnProperty(key) && element.key === conditions[key]
-        }).filter(e => e).length === conditions.length
+        }).filter(e => e).length === Object.keys(conditions).length
       })
       callback('', filter)
     },
