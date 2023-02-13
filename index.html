@@ -142,6 +142,7 @@
     </div>
     <script>
       var socket = io();
+      var messages = [];
       $(() => {
         $("#button-link-files").click(() => {
           clearSelection();
@@ -227,8 +228,9 @@
       socket.on("message", addMessages);
 
       function addMessages(message) {
+        messages.push(message)
         $("#messages").append(
-          `<p class="message-item"> <span class="display-4">${message.name}</span> <button class="btn btn-light" onclick="myFunction('${message.message}')">Copy</button></p>  <p> ${message.message} </p> `
+          `<p class="message-item"> <span class="display-4">${message.name}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
         );
       }
 
@@ -242,7 +244,8 @@
         $.post("http://192.168.2.107:3000/messages", message);
       }
 
-      function myFunction(copyText) {
+      function myFunction(messageIndex) {
+        const copyText = messages[messageIndex].message
         console.log(copyText);
         if (typeof navigator.clipboard == "undefined") {
           console.log("navigator.clipboard");
@@ -257,6 +260,7 @@
             var successful = document.execCommand("copy");
             var msg = successful ? "successful" : "unsuccessful";
             console.log(msg);
+            window.confirm(msg);
           } catch (err) {
             console.log("Was not possible to copy te text: ", err);
           }
@@ -267,6 +271,7 @@
         navigator.clipboard.writeText(copyText).then(
           function () {
             console.log(`successful!`);
+            window.confirm("successful");
           },
           function (err) {
             console.log("unsuccessful!", err);
