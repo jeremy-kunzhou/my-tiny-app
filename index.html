@@ -141,6 +141,7 @@
       <div id="messages"></div>
     </div>
     <script>
+      var SERVER_URL = "http://192.168.2.107:3000"
       var socket = io();
       var messages = [];
       $(() => {
@@ -230,18 +231,18 @@
       function addMessages(message) {
         messages.push(message)
         $("#messages").append(
-          `<p class="message-item"> <span class="display-4">${message.name}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
+          `<p class="message-item"> <span class="display-4">${message.name ? message.name:'No Title'}</span> <span>${new Date(message.receivedAt).toLocaleString()}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
         );
       }
 
       function getMessages() {
-        $.get("http://192.168.2.107:3000/messages", (data) => {
+        $.get(`${SERVER_URL}/messages`, (data) => {
           data.forEach(addMessages);
         });
       }
 
       function sendMessage(message) {
-        $.post("http://192.168.2.107:3000/messages", message);
+        $.post(`${SERVER_URL}/messages`, message);
       }
 
       function myFunction(messageIndex) {

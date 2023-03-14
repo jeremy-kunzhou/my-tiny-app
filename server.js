@@ -6,7 +6,6 @@ var app = express();
 var http = require("http").Server(app);
 var io = require("socket.io")(http);
 const multer = require("multer");
-
 var serveIndex = require("serve-index");
 app.use(express.static(__dirname));
 app.use(bodyParser.json());
@@ -59,6 +58,7 @@ function MessageStorage() {
     save: function (name, message) {
       allMessages.push({
         name,
+        receivedAt: Date.now(),
         message,
       });
     },
@@ -140,6 +140,6 @@ io.on("connection", () => {
   console.log("a user is connected");
 });
 
-var server = http.listen(3000, "192.168.2.107", () => {
+var server = http.listen(process.argv[2], process.argv[3], () => {
   console.log("server is running on port", server.address().port);
 });
