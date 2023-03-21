@@ -55,10 +55,10 @@ function MessageStorage() {
       });
       callback("", filter);
     },
-    save: function (name, message) {
+    save: function (name, message, receivedAt) {
       allMessages.push({
         name,
-        receivedAt: Date.now(),
+        receivedAt,
         message,
       });
     },
@@ -91,14 +91,15 @@ app.get("/messages/:user", (req, res) => {
 
 app.post("/messages", async (req, res) => {
   try {
-    Message.save(req.body.name, req.body.message);
+    const receivedAt = Date.now()
+    Message.save(req.body.name, req.body.message, receivedAt);
     console.log("saved");
 
     // var censored = await Message.findOne({message:'badword'});
     //   if(censored)
     //     await Message.remove({_id: censored.id})
     //   else
-    io.emit("message", req.body);
+    io.emit("message", {...req.body, receivedAt});
     res.sendStatus(200);
   } catch (error) {
     res.sendStatus(500);

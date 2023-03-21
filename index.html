@@ -231,7 +231,7 @@
       function addMessages(message) {
         messages.push(message)
         $("#messages").append(
-          `<p class="message-item"> <span class="display-4">${message.name ? message.name:'No Title'}</span> <span>${new Date(message.receivedAt).toLocaleString()}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
+          `<p class="message-item"> <span class="display-4">${message.name ? message.name:'No Title'}</span><span>${new Date(message.receivedAt).toLocaleString()}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
         );
       }
 
@@ -259,7 +259,7 @@
 
           try {
             var successful = document.execCommand("copy");
-            var msg = successful ? "successful" : "unsuccessful";
+            var msg = successful ? "success" : "failure";
             console.log(msg);
             window.confirm(msg);
           } catch (err) {
@@ -271,11 +271,11 @@
         }
         navigator.clipboard.writeText(copyText).then(
           function () {
-            console.log(`successful!`);
-            window.confirm("successful");
+            console.log(`success!`);
+            window.confirm("success");
           },
           function (err) {
-            console.log("unsuccessful!", err);
+            console.log("failure!", err);
           }
         );
       }
