@@ -126,35 +126,20 @@ app.post("/upload", fileUpload({
 
     // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
     sampleFile = req.files.sampleFile;
-    uploadPath = path.join(__dirname, "upload", Buffer.from(sampleFile.name).toString('utf-8'));
+    const fileFullName = Buffer.from(sampleFile.name).toString('utf-8');
+    const extendName = fileFullName.substring(fileFullName.lastIndexOf('.'))
+    const fileName = fileFullName.substring(0, fileFullName.lastIndexOf('.')).replace(/[|/\\:*?"<>]/gi, '_');
+    uploadPath = path.join(__dirname, "upload", `${fileName}${extendName}`);
     console.log('update path', uploadPath);
     // Use the mv() method to place the file somewhere on your server
     sampleFile.mv(uploadPath, async function (err) {
       if (err) {
         console.log('upload error', err);
-        if (err.toString().includes('no such file')) {
-          uploadPath = path.join(__dirname,
-            "upload",
-            generateRandom() + '' + sampleFile.name.substring(sampleFile.name.lastIndexOf('.')));
-          sampleFile.mv(uploadPath, function (err) {
-            if (err) {
-              console.log('upload error', err)
-              // cause the problem: ERR_HTTP_HEADERS_SENT
-              // return res.status(500).send(err);
-            } else {
-              console.log('Upload Success', uploadPath)
-              // cause the problem: ERR_HTTP_HEADERS_SENT
-              // return res.send("File uploaded!" + uploadPath);
-            }
-          });
-        } else {
-          return res.status(500).send(err);
-        }
+        return res.status(500).send(err);
       } else {
         console.log('Upload Success', uploadPath);
         return res.send("File uploaded!" + uploadPath);
       }
-
     });
   } catch (error) {
     console.error(error)
