@@ -11,6 +11,8 @@ app.use(express.static(__dirname));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+const generateRandom = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(23).substring(2, 5);
+
 const MIME_TYPE_MAP = {
   "image/png": "png",
   "image/jpeg": "jpeg",
@@ -99,7 +101,7 @@ app.post("/messages", async (req, res) => {
     //   if(censored)
     //     await Message.remove({_id: censored.id})
     //   else
-    io.emit("message", {...req.body, receivedAt});
+    io.emit("message", { ...req.body, receivedAt });
     res.sendStatus(200);
   } catch (error) {
     res.sendStatus(500);
@@ -109,32 +111,64 @@ app.post("/messages", async (req, res) => {
   }
 });
 
-app.post("/upload", fileUpload(), function (req, res) {
-  let sampleFile;
-  let uploadPath;
+app.post("/upload", fileUpload({
+  defCharset: 'utf8',
+  defParamCharset: 'utf8'
+}), async function (req, res, next) {
+  try {
+    let sampleFile;
+    let uploadPath;
 
-  console.log("upload call");
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).send("No files were uploaded.");
+    console.log("upload call");
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).send("No files were uploaded.");
+    }
+
+    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+    sampleFile = req.files.sampleFile;
+    uploadPath = path.join(__dirname, "upload", Buffer.from(sampleFile.name).toString('utf-8'));
+    console.log('update path', uploadPath);
+    // Use the mv() method to place the file somewhere on your server
+    sampleFile.mv(uploadPath, async function (err) {
+      if (err) {
+        console.log('upload error', err);
+        if (err.toString().includes('no such file')) {
+          uploadPath = path.join(__dirname,
+            "upload",
+            generateRandom() + '' + sampleFile.name.substring(sampleFile.name.lastIndexOf('.')));
+          sampleFile.mv(uploadPath, function (err) {
+            if (err) {
+              console.log('upload error', err)
+              // cause the problem: ERR_HTTP_HEADERS_SENT
+              // return res.status(500).send(err);
+            } else {
+              console.log('Upload Success', uploadPath)
+              // cause the problem: ERR_HTTP_HEADERS_SENT
+              // return res.send("File uploaded!" + uploadPath);
+            }
+          });
+        } else {
+          return res.status(500).send(err);
+        }
+      } else {
+        console.log('Upload Success', uploadPath);
+        return res.send("File uploaded!" + uploadPath);
+      }
+
+    });
+  } catch (error) {
+    console.error(error)
+    next(error)
   }
 
-  // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-  sampleFile = req.files.sampleFile;
-  uploadPath = __dirname + "/upload/" + sampleFile.name;
-
-  // Use the mv() method to place the file somewhere on your server
-  sampleFile.mv(uploadPath, function (err) {
-    if (err) return res.status(500).send(err);
-
-    res.send("File uploaded!");
-  });
 });
 
 app.post("/uploadPhoto", upload.array("photo", 3), function (req, res) {
   if (!req.files) {
     return res.status(400).send("No files were uploaded.");
+  } else {
+    res.send("File uploaded!");
   }
-  res.send("File uploaded!");
 });
 
 io.on("connection", () => {
