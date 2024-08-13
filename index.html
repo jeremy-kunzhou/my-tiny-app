@@ -26,7 +26,7 @@
       crossorigin="anonymous"
     ></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
     <script src="/script/qrcode.js"></script>
     <style>
       .tooltip {
@@ -98,6 +98,9 @@
         <li class="nav-item">
           <button class="nav-link" id="button-link-messages">Messages</button>
         </li>
+        <li class="nav-item">
+          <button class="nav-link" id="button-link-timer">Timer</button>
+        </li>
       </ul>
       <div class="jumbotron" id="qrcode-panel">
         <h4 class="display-9">Qr Code</h4>
@@ -138,10 +141,30 @@
         <button id="send" class="btn btn-success">Send</button>
         <button id="clear" class="btn btn-warning">Clear</button>
       </div>
+      <div class="jumbotron hidden" id="timer-panel">
+        <h4 class="display-9">Timer</h4>
+        <div style="font-size: 3rem; display: flex; justify-content: left;">
+          <div style="border: 1px solid black; padding: 1rem">
+            <span id="timer-h">00</span>:<span id="timer-m">00</span>:<span id="timer-s">00</span>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <button id="button-timer-inc"class="btn">+</button>
+            <button id="button-timer-dec" class="btn">-</button>
+          </div>
+        </div>
+        <div>
+          <button id="button-timer-start" class="btn">Start</button>
+          <button id="button-timer-pause" class="btn">Pause</button>
+          <button id="button-timer-reset" class="btn">Reset</button>
+        </div>
+      </div>
       <div id="messages"></div>
     </div>
     <script>
-      var SERVER_URL = "http://192.168.2.107:3000"
+      // SERVER_ADDRESS
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      var SERVER_URL = 'https://' + urlParams.get('address')
       var socket = io();
       var messages = [];
       $(() => {
@@ -163,13 +186,21 @@
           $("#button-link-messages").addClass("active");
         })
 
+        $("#button-link-timer").click(() => {
+          clearSelection();
+          $("#timer-panel").removeClass('hidden');
+          $("#button-link-timer").addClass("active");
+        })
+
         function clearSelection() {
           $("#qrcode-panel").addClass('hidden');
           $("#files-panel").addClass('hidden');
           $("#messages-panel").addClass('hidden');
+          $("#timer-panel").addClass('hidden');
           $("#button-link-qrcode").removeClass("active");
           $("#button-link-files").removeClass("active");
           $("#button-link-messages").removeClass("active");
+          $('#button-link-timer').removeClass("active");
         }
 
 
@@ -280,5 +311,6 @@
         );
       }
     </script>
+    <script src="./script/timer.js" ></script>
   </body>
 </html>

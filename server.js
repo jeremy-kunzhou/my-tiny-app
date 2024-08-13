@@ -2,8 +2,17 @@ var express = require("express");
 const fileUpload = require("express-fileupload");
 var bodyParser = require("body-parser");
 var path = require("path");
+var fs = require("fs");
 var app = express();
-var http = require("http").Server(app);
+
+console.log(path.join(__dirname,'security/cert.key'))
+
+const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname,'security/cert.key')),
+    cert: fs.readFileSync(path.join(__dirname,'security/cert.pem'))
+}
+
+var http = require("https").createServer(httpsOptions, app);
 var io = require("socket.io")(http);
 const multer = require("multer");
 var serveIndex = require("serve-index");
@@ -159,6 +168,7 @@ app.post("/uploadPhoto", upload.array("photo", 3), function (req, res) {
 io.on("connection", () => {
   console.log("a user is connected");
 });
+
 
 var server = http.listen(process.argv[2], process.argv[3], () => {
   console.log("server is running on port", server.address().port);
