@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const elementHour = $('#timer-h')
   const elementMinute = $('#timer-m')
   const elementSecond = $('#timer-s')
+  const timerWrapper = $('#timer-wrapper')
 
   let defaultTimeLength = 30
   let timeLength = defaultTimeLength * 60;
@@ -15,6 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const controlReset = $('#button-timer-reset');
   const controlInc = $('#button-timer-inc');
   const controlDec = $('#button-timer-dec');
+  const controlInc5 = $('#button-timer-inc-5');
+  const controlDec5 = $('#button-timer-dec-5');
 
   // 0 not start 1 running 2 pause 
   let mode = 0
@@ -42,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startTimer() {
     if (mode == 0 || mode == 2) {
-      mode = 1
+      changeModeStyle(1)
       intervalHandler = setInterval(() => {
         display(timeTransfer(--timeLength))
 
@@ -55,12 +58,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function stop() {
-    mode = 0
+    changeModeStyle(0)
     clearInterval(intervalHandler)
   }
 
   function pause() {
-    mode = 2
+    changeModeStyle(2)
     clearInterval(intervalHandler)
   }
 
@@ -68,6 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
     stop()
     timeLength = defaultTimeLength * 60
     display(timeTransfer(timeLength))
+  }
+
+  function changeModeStyle(targetMode) {
+    mode = targetMode
+    timerWrapper.removeClass('timer-stop')
+    timerWrapper.removeClass('timer-running')
+    if (mode == 2 || mode == 0) {
+      timerWrapper.addClass('timer-stop')
+    } else {
+      timerWrapper.addClass('timer-running')
+    }
   }
 
   controlStart.on('click', () => {
@@ -93,6 +107,22 @@ document.addEventListener("DOMContentLoaded", () => {
   controlDec.on('click', () => {
     if (mode == 0) {
       defaultTimeLength--
+      timeLength = defaultTimeLength * 60
+      display(timeTransfer(timeLength))
+    }
+  })
+
+  controlInc5.on('click', () => {
+    if (mode == 0) {
+      defaultTimeLength += 5
+      timeLength = defaultTimeLength * 60
+      display(timeTransfer(timeLength))
+    }
+  })
+
+  controlDec5.on('click', () => {
+    if (mode == 0) {
+      defaultTimeLength = Math.max(1, defaultTimeLength - 5)
       timeLength = defaultTimeLength * 60
       display(timeTransfer(timeLength))
     }
