@@ -4,8 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const elementMinute = $('#timer-m')
   const elementSecond = $('#timer-s')
   const timerWrapper = $('#timer-wrapper')
+  const tickRecordList = $('#tick-record-list')
 
-  let defaultTimeLength = 30
+  let defaultTimeLength = 20
   let timeLength = defaultTimeLength * 60;
 
   const { h, m, s } = timeTransfer(timeLength)
@@ -18,9 +19,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const controlDec = $('#button-timer-dec');
   const controlInc5 = $('#button-timer-inc-5');
   const controlDec5 = $('#button-timer-dec-5');
+  const tickButton = $('#button-timer-tick');
+  let tickRecord = []
 
-  // 0 not start 1 running 2 pause 
-  let mode = 0
+  const NOT_START = 0
+  const RUNNING_NORMAL = 1
+  const RUNNING_OVERTIME = 2
+  const PAUSE = 3
+
+  let mode = NOT_START
 
   function display({ h, m, s }) {
     elementHour.text((h + '').padStart(2, 0))
@@ -44,13 +51,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let intervalHandler = null;
 
   function startTimer() {
-    if (mode == 0 || mode == 2) {
-      changeModeStyle(1)
+    if (mode == NOT_START) {
+      tickRecord = []
+      updateTickRecord(tickRecord)
+    }
+    if (mode == NOT_START || mode == PAUSE) {
+      changeModeStyle(timeLength > 0 ? RUNNING_NORMAL : RUNNING_OVERTIME)
       intervalHandler = setInterval(() => {
-        display(timeTransfer(--timeLength))
+        display(timeTransfer(Math.abs(--timeLength)))
 
-        if (timeLength == 0) {
-          stop()
+        if (mode != 3 && timeLength < 0) {
+          changeModeStyle(RUNNING_OVERTIME)
         }
       }, 1000)
     }
@@ -58,12 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function stop() {
-    changeModeStyle(0)
+    changeModeStyle(NOT_START)
     clearInterval(intervalHandler)
   }
 
   function pause() {
-    changeModeStyle(2)
+    changeModeStyle(PAUSE)
     clearInterval(intervalHandler)
   }
 
@@ -75,13 +86,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function changeModeStyle(targetMode) {
     mode = targetMode
-    timerWrapper.removeClass('timer-stop')
+    timerWrapper.removeClass('timer-over')
     timerWrapper.removeClass('timer-running')
-    if (mode == 2 || mode == 0) {
-      timerWrapper.addClass('timer-stop')
-    } else {
+    timerWrapper.removeClass('timer-pause')
+    if (mode == PAUSE) {
+      timerWrapper.addClass('timer-pause')
+    } else if (mode == RUNNING_NORMAL) {
       timerWrapper.addClass('timer-running')
+    } else if (mode == RUNNING_OVERTIME) {
+      timerWrapper.addClass('timer-over')
     }
+  }
+
+  function updateTickRecord(arr) {
+    tickRecordList.html('')
+    arr.forEach(([m, e, e2]) => {
+      const { m: min1, s: s1 } = timeTransfer(e)
+      const { m: min2, s: s2 } = timeTransfer(e2)
+      tickRecordList.append($(`<li class='${m == RUNNING_NORMAL ? "normal" : "overtime"}'>${min1}:${s1} [${min2}:${s2}]</li>`))
+    })
   }
 
   controlStart.on('click', () => {
@@ -97,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   controlInc.on('click', () => {
-    if (mode == 0) {
+    if (mode == NOT_START) {
       defaultTimeLength++
       timeLength = defaultTimeLength * 60
       display(timeTransfer(timeLength))
@@ -105,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   controlDec.on('click', () => {
-    if (mode == 0) {
+    if (mode == NOT_START) {
       defaultTimeLength--
       timeLength = defaultTimeLength * 60
       display(timeTransfer(timeLength))
@@ -113,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   controlInc5.on('click', () => {
-    if (mode == 0) {
+    if (mode == NOT_START) {
       defaultTimeLength += 5
       timeLength = defaultTimeLength * 60
       display(timeTransfer(timeLength))
@@ -121,10 +144,18 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   controlDec5.on('click', () => {
-    if (mode == 0) {
+    if (mode == NOT_START) {
       defaultTimeLength = Math.max(1, defaultTimeLength - 5)
       timeLength = defaultTimeLength * 60
       display(timeTransfer(timeLength))
+    }
+  })
+
+  tickButton.on('click', () => {
+    if (mode == RUNNING_NORMAL || mode == RUNNING_OVERTIME) {
+      const base = tickRecord.length == 0 ? defaultTimeLength * 60 : tickRecord[tickRecord.length - 1][3]
+      tickRecord.push([mode, base - timeLength, defaultTimeLength * 60 - timeLength, timeLength])
+      updateTickRecord(tickRecord)
     }
   })
 

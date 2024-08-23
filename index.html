@@ -80,19 +80,38 @@
       }
 
       .message-item {
-        display: flex; 
-        align-items: center; 
+        display: flex;
+        align-items: center;
         column-gap: 1rem;
       }
 
-      .timer-stop {
-        border: 4px solid black; 
+      #timer-wrapper {
+        border: 4px solid transparent;
+      }
+
+      #timer-wrapper.timer-over {
         border-color: red;
       }
 
-      .timer-running {
-        border: 4px solid black; 
+      #timer-wrapper.timer-running {
         border-color: green;
+      }
+
+      #timer-wrapper.timer-pause {
+        border-color: orange;
+      }
+
+      #tick-record-list li {
+        margin: 0 1rem;
+      }
+
+      #tick-record-list li.normal {
+        color: green;
+      }
+
+      #tick-record-list li.overtime {
+        color: red;
+        font-weight: bold;
       }
     </style>
   </head>
@@ -100,7 +119,13 @@
     <div class="container">
       <ul class="nav nav-tabs">
         <li class="nav-item">
-          <button class="nav-link active" aria-current="page" id="button-link-qrcode">QR Code</butt>
+          <button
+            class="nav-link active"
+            aria-current="page"
+            id="button-link-qrcode"
+          >
+            QR Code
+          </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" id="button-link-files">Files</button>
@@ -115,7 +140,11 @@
       <div class="jumbotron" id="qrcode-panel">
         <h4 class="display-9">Qr Code</h4>
         <canvas id="canvas"></canvas>
-        <textarea id="qr-content" class="form-control" placeholder="content" ></textarea>
+        <textarea
+          id="qr-content"
+          class="form-control"
+          placeholder="content"
+        ></textarea>
         <br />
         <button id="qr-gen-button" class="btn btn-success">Gen QR</button>
         <button id="qr-clear-button" class="btn btn-warning">Clear</button>
@@ -152,24 +181,82 @@
         <button id="clear" class="btn btn-warning">Clear</button>
       </div>
       <div class="jumbotron hidden" id="timer-panel">
-        <h4 class="display-9">Timer</h4>
-        <div style="font-size: 3rem; display: flex; justify-content: left;">
-          <div style="padding: 1rem" class="timer-stop" id="timer-wrapper">
-            <span id="timer-h">00</span>:<span id="timer-m">00</span>:<span id="timer-s">00</span>
+        <div
+          style="
+            font-size: 3rem;
+            display: flex;
+            justify-content: left;
+            align-items: flex-start;
+          "
+        >
+          <div style="font-size: 3rem">
+            <h4 class="display-9">Timer</h4>
+            <div
+              style="
+                font-size: 3rem;
+                display: flex;
+                justify-content: left;
+                align-items: flex-start;
+              "
+            >
+              <div>
+                <div style="display: flex">
+                  <div style="padding: 1rem" class="" id="timer-wrapper">
+                    <span id="timer-h">00</span>:<span id="timer-m">00</span
+                    >:<span id="timer-s">00</span>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: space-between;
+                    "
+                  >
+                    <button id="button-timer-inc" class="btn">+</button>
+                    <button id="button-timer-dec" class="btn">-</button>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: space-between;
+                    "
+                  >
+                    <button id="button-timer-inc-5" class="btn">+5</button>
+                    <button id="button-timer-dec-5" class="btn">-5</button>
+                  </div>
+                  <div style="display: flex; align-items: stretch">
+                    <button
+                      id="button-timer-tick"
+                      class="btn"
+                      style="width: 100px; height: 100%"
+                    >
+                      Tick
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <button id="button-timer-start" class="btn">Start</button>
+                  <button id="button-timer-pause" class="btn">Pause</button>
+                  <button id="button-timer-reset" class="btn">Reset</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div style="display: flex; flex-direction: column; justify-content: space-between;">
-            <button id="button-timer-inc"class="btn">+</button>
-            <button id="button-timer-dec" class="btn">-</button>
+          <div style="width: 100%">
+            <h4>Record</h4>
+            <ul
+              style="
+                font-size: 1rem;
+                border: 2px solid black;
+                min-height: 100px;
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+              "
+              id="tick-record-list"
+            ></ul>
           </div>
-          <div style="display: flex; flex-direction: column; justify-content: space-between;">
-            <button id="button-timer-inc-5"class="btn">+5</button>
-            <button id="button-timer-dec-5" class="btn">-5</button>
-          </div>
-        </div>
-        <div>
-          <button id="button-timer-start" class="btn">Start</button>
-          <button id="button-timer-pause" class="btn">Pause</button>
-          <button id="button-timer-reset" class="btn">Reset</button>
         </div>
       </div>
       <div id="messages"></div>
@@ -178,46 +265,44 @@
       // SERVER_ADDRESS
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
-      var SERVER_URL = 'https://' + urlParams.get('address')
+      var SERVER_URL = "https://" + urlParams.get("address");
       var socket = io();
       var messages = [];
       $(() => {
         $("#button-link-files").click(() => {
           clearSelection();
-          $("#files-panel").removeClass('hidden');
+          $("#files-panel").removeClass("hidden");
           $("#button-link-files").addClass("active");
-        })
+        });
 
         $("#button-link-qrcode").click(() => {
           clearSelection();
-          $("#qrcode-panel").removeClass('hidden');
+          $("#qrcode-panel").removeClass("hidden");
           $("#button-link-qrcode").addClass("active");
-        })
+        });
 
         $("#button-link-messages").click(() => {
           clearSelection();
-          $("#messages-panel").removeClass('hidden');
+          $("#messages-panel").removeClass("hidden");
           $("#button-link-messages").addClass("active");
-        })
+        });
 
         $("#button-link-timer").click(() => {
           clearSelection();
-          $("#timer-panel").removeClass('hidden');
+          $("#timer-panel").removeClass("hidden");
           $("#button-link-timer").addClass("active");
-        })
+        });
 
         function clearSelection() {
-          $("#qrcode-panel").addClass('hidden');
-          $("#files-panel").addClass('hidden');
-          $("#messages-panel").addClass('hidden');
-          $("#timer-panel").addClass('hidden');
+          $("#qrcode-panel").addClass("hidden");
+          $("#files-panel").addClass("hidden");
+          $("#messages-panel").addClass("hidden");
+          $("#timer-panel").addClass("hidden");
           $("#button-link-qrcode").removeClass("active");
           $("#button-link-files").removeClass("active");
           $("#button-link-messages").removeClass("active");
-          $('#button-link-timer').removeClass("active");
+          $("#button-link-timer").removeClass("active");
         }
-
-
 
         // send message
         $("#send").click(() => {
@@ -248,7 +333,7 @@
           // ctx.clearRect(0, 0, 0, 0);
           // canvas.width = canvas.height = 0;
           // ctx.fillRect(0, 0, 0, 0);
-          canvas.style.height = '0px';
+          canvas.style.height = "0px";
         });
 
         // upload file
@@ -274,9 +359,15 @@
       socket.on("message", addMessages);
 
       function addMessages(message) {
-        messages.push(message)
+        messages.push(message);
         $("#messages").append(
-          `<p class="message-item"> <span class="display-4">${message.name ? message.name:'No Title'}</span><span>${new Date(message.receivedAt).toLocaleString()}</span> <button class="btn btn-light" onclick="myFunction(${messages.length-1})">Copy</button></p>  <p> ${message.message} </p> `
+          `<p class="message-item"> <span class="display-4">${
+            message.name ? message.name : "No Title"
+          }</span><span>${new Date(
+            message.receivedAt
+          ).toLocaleString()}</span> <button class="btn btn-light" onclick="myFunction(${
+            messages.length - 1
+          })">Copy</button></p>  <p> ${message.message} </p> `
         );
       }
 
@@ -291,7 +382,7 @@
       }
 
       function myFunction(messageIndex) {
-        const copyText = messages[messageIndex].message
+        const copyText = messages[messageIndex].message;
         console.log(copyText);
         if (typeof navigator.clipboard == "undefined") {
           console.log("navigator.clipboard");
@@ -325,6 +416,6 @@
         );
       }
     </script>
-    <script src="./script/timer.js" ></script>
+    <script src="./script/timer.js"></script>
   </body>
 </html>
